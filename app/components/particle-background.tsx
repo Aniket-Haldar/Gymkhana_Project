@@ -1,15 +1,20 @@
 "use client"
 
-import { Canvas, useFrame } from "@react-three/fiber"
+import { Canvas, useFrame, useThree } from "@react-three/fiber"
 import { Points, PointMaterial } from "@react-three/drei"
-import { useRef, useMemo, Suspense } from "react"
-import type * as THREE from "three"
+import { useRef, useMemo, Suspense, useEffect, useState, useCallback } from "react"
+import * as THREE from "three"
 
-function Particles(props: any) {
+function InteractiveParticles(props: any) {
   const ref = useRef<THREE.Points>(null)
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
+  const [isHovered, setIsHovered] = useState(false)
+  const { viewport } = useThree()
 
   const [sphere] = useMemo(() => {
-    const positions = new Float32Array(3000 * 3) // Reduced particle count
+    const positions = new Float32Array(3000 * 3)
+    const colors = new Float32Array(3000 * 3)
+
     for (let i = 0; i < 3000; i++) {
       const radius = Math.random() * 1.2
       const theta = Math.random() * Math.PI * 2
@@ -18,21 +23,63 @@ function Particles(props: any) {
       positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta)
       positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta)
       positions[i * 3 + 2] = radius * Math.cos(phi)
+
+      colors[i * 3] = 0.08 + Math.random() * 0.4 // R
+      colors[i * 3 + 1] = 0.72 + Math.random() * 0.2 // G
+      colors[i * 3 + 2] = 0.65 + Math.random() * 0.3 // B
     }
-    return [positions]
+    return [positions, colors]
   }, [])
+
+  const handleMouseMove = useCallback((event: MouseEvent) => {
+    setMousePosition({
+      x: (event.clientX / window.innerWidth) * 2 - 1,
+      y: -(event.clientY / window.innerHeight) * 2 + 1,
+    })
+  }, [])
+
+  const handleMouseEnter = useCallback(() => setIsHovered(true), [])
+  const handleMouseLeave = useCallback(() => setIsHovered(false), [])
+
+  useEffect(() => {
+    window.addEventListener("mousemove", handleMouseMove)
+    window.addEventListener("mouseenter", handleMouseEnter)
+    window.addEventListener("mouseleave", handleMouseLeave)
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove)
+      window.removeEventListener("mouseenter", handleMouseEnter)
+      window.removeEventListener("mouseleave", handleMouseLeave)
+    }
+  }, [handleMouseMove, handleMouseEnter, handleMouseLeave])
 
   useFrame((state, delta) => {
     if (ref.current) {
-      ref.current.rotation.x -= delta / 10
-      ref.current.rotation.y -= delta / 15
+      const targetRotationX = mousePosition.y * 0.1
+      const targetRotationY = mousePosition.x * 0.1
+
+      ref.current.rotation.x += (targetRotationX - ref.current.rotation.x) * 0.05
+      ref.current.rotation.y += (targetRotationY - ref.current.rotation.y) * 0.05
+
+      ref.current.rotation.x -= delta / (isHovered ? 20 : 10)
+      ref.current.rotation.y -= delta / (isHovered ? 25 : 15)
+
+      const targetScale = isHovered ? 1.2 : 1.0
+      ref.current.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.1)
     }
   })
 
   return (
     <group rotation={[0, 0, Math.PI / 4]}>
-      <Points ref={ref} positions={sphere} stride={3} frustumCulled={false} {...props}>
-        <PointMaterial transparent color="#3b82f6" size={0.003} sizeAttenuation={true} depthWrite={false} />
+      <Points ref={ref} positions={sphere[0]} stride={3} frustumCulled={false} {...props}>
+        <PointMaterial
+          transparent
+          color={isHovered ? "#06b6d4" : "#14b8a6"}
+          size={isHovered ? 0.005 : 0.003}
+          sizeAttenuation={true}
+          depthWrite={false}
+          vertexColors={true}
+        />
       </Points>
     </group>
   )
@@ -41,7 +88,7 @@ function Particles(props: any) {
 function ParticleScene() {
   return (
     <Suspense fallback={null}>
-      <Particles />
+      <InteractiveParticles />
     </Suspense>
   )
 }

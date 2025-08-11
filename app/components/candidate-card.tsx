@@ -2,11 +2,9 @@
 
 import { Badge } from "@/components/ui/badge"
 import Image from "next/image"
-import { useState, Suspense } from "react"
-import { Canvas } from "@react-three/fiber"
-import { OrbitControls, MeshDistortMaterial } from "@react-three/drei"
-import { useRef } from "react"
-import { useFrame } from "@react-three/fiber"
+import { useState, Suspense, useRef, useCallback } from "react"
+import { Canvas, useFrame } from "@react-three/fiber"
+import { OrbitControls, MeshDistortMaterial, Float } from "@react-three/drei"
 import type * as THREE from "three"
 
 interface Candidate {
@@ -18,7 +16,6 @@ interface Candidate {
   description: string
   achievements: string[]
   color: string
-  experience: string
   keyPolicies: string[]
 }
 
@@ -26,41 +23,95 @@ interface CandidateCardProps {
   candidate: Candidate
 }
 
-function FloatingCard() {
+function InteractiveCard({ isHovered, onClick }: { isHovered: boolean; onClick: () => void }) {
   const meshRef = useRef<THREE.Mesh>(null)
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
 
   useFrame((state) => {
     if (meshRef.current) {
-      meshRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.3) * 0.05
-      meshRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.2) * 0.05
+      // Base floating animation
+      meshRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.3) * 0.05 + mousePosition.y * 0.1
+      meshRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.2) * 0.05 + mousePosition.x * 0.1
       meshRef.current.position.y = Math.sin(state.clock.elapsedTime * 0.5) * 0.05
+
+      // Interactive scaling based on hover
+      const targetScale = isHovered ? 1.1 : 1
+      meshRef.current.scale.lerp({ x: targetScale, y: targetScale, z: targetScale } as THREE.Vector3, 0.1)
     }
   })
 
+  const handlePointerMove = useCallback((event: any) => {
+    const x = (event.point.x / 2) * 0.5
+    const y = (event.point.y / 2) * 0.5
+    setMousePosition({ x, y })
+  }, [])
+
+  const handleClick = useCallback(() => {
+    onClick()
+  }, [onClick])
+
   return (
-    <mesh ref={meshRef}>
+    <mesh
+      ref={meshRef}
+      onClick={handleClick}
+      onPointerMove={handlePointerMove}
+      onPointerEnter={() => (document.body.style.cursor = "pointer")}
+      onPointerLeave={() => (document.body.style.cursor = "default")}
+    >
       <boxGeometry args={[1.8, 2.5, 0.1]} />
       <MeshDistortMaterial
-        color="#1e293b"
+        color={isHovered ? "#0891b2" : "#1e293b"}
         attach="material"
-        distort={0.05}
-        speed={0.8}
+        distort={isHovered ? 0.15 : 0.05}
+        speed={isHovered ? 1.5 : 0.8}
         roughness={0.3}
         metalness={0.7}
         transparent
-        opacity={0.2}
+        opacity={isHovered ? 0.4 : 0.2}
       />
     </mesh>
   )
 }
 
-function CardScene() {
+function FloatingParticles() {
+  const particlesRef = useRef<THREE.Group>(null)
+
+  useFrame((state) => {
+    if (particlesRef.current) {
+      particlesRef.current.rotation.y = state.clock.elapsedTime * 0.1
+    }
+  })
+
+  return (
+    <group ref={particlesRef}>
+      {Array.from({ length: 8 }).map((_, i) => (
+        <Float key={i} speed={1 + i * 0.2} rotationIntensity={0.5} floatIntensity={0.5}>
+          <mesh position={[Math.cos(i * 0.785) * 2, Math.sin(i * 0.785) * 2, Math.random() * 2 - 1]}>
+            <sphereGeometry args={[0.05, 8, 8]} />
+            <meshStandardMaterial color="#06b6d4" emissive="#06b6d4" emissiveIntensity={0.2} />
+          </mesh>
+        </Float>
+      ))}
+    </group>
+  )
+}
+
+function CardScene({ isHovered, onCardClick }: { isHovered: boolean; onCardClick: () => void }) {
   return (
     <Suspense fallback={null}>
-      <ambientLight intensity={0.2} />
-      <pointLight position={[5, 5, 5]} intensity={0.3} />
-      <FloatingCard />
-      <OrbitControls enableZoom={false} enablePan={false} autoRotate autoRotateSpeed={0.5} />
+      <ambientLight intensity={0.3} />
+      <pointLight position={[5, 5, 5]} intensity={0.5} color="#06b6d4" />
+      <pointLight position={[-5, -5, 5]} intensity={0.3} color="#0891b2" />
+      <InteractiveCard isHovered={isHovered} onClick={onCardClick} />
+      <FloatingParticles />
+      <OrbitControls
+        enableZoom={false}
+        enablePan={false}
+        autoRotate
+        autoRotateSpeed={isHovered ? 2 : 0.5}
+        enableDamping
+        dampingFactor={0.05}
+      />
     </Suspense>
   )
 }
@@ -69,19 +120,34 @@ export function CandidateCard({ candidate }: CandidateCardProps) {
   const [isHovered, setIsHovered] = useState(false)
   const [showModal, setShowModal] = useState(false)
 
+  const handleMouseEnter = useCallback(() => {
+    setIsHovered(true)
+  }, [])
+
+  const handleMouseLeave = useCallback(() => {
+    setIsHovered(false)
+  }, [])
+
+  const handleCardClick = useCallback(() => {
+    setShowModal(true)
+  }, [])
+
+  const handleCloseModal = useCallback(() => {
+    setShowModal(false)
+  }, [])
+
   return (
     <>
       <div className="relative group">
         <div
           className={`relative w-full h-96 transition-all duration-500 cursor-pointer ${isHovered ? "scale-105" : ""}`}
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
-          onClick={() => setShowModal(true)}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+          onClick={handleCardClick}
         >
-          {/* 3D Background */}
-          <div className="absolute inset-0 w-full h-full opacity-30">
-            <Canvas camera={{ position: [0, 0, 4], fov: 50 }} gl={{ antialias: false, alpha: true }} dpr={[1, 1]}>
-              <CardScene />
+          <div className="absolute inset-0 w-full h-full opacity-40">
+            <Canvas camera={{ position: [0, 0, 4], fov: 50 }} gl={{ antialias: false, alpha: true }} dpr={[1, 1.5]}>
+              <CardScene isHovered={isHovered} onCardClick={handleCardClick} />
             </Canvas>
           </div>
 
@@ -99,19 +165,18 @@ export function CandidateCard({ candidate }: CandidateCardProps) {
               {/* Gradient overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
-              {/* Floating badge */}
               <div className="absolute top-4 right-4">
                 <Badge
                   className={`bg-gradient-to-r ${candidate.color} text-white border-0 shadow-lg backdrop-blur-sm px-3 py-1`}
                 >
-                  {candidate.experience}
+                  {candidate.position}
                 </Badge>
               </div>
             </div>
 
             <div className="p-6 space-y-4">
               <div className="space-y-2">
-                <h3 className="text-xl font-bold text-white group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:bg-clip-text group-hover:from-blue-400 group-hover:to-purple-400 transition-all duration-500">
+                <h3 className="text-xl font-bold text-white group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:bg-clip-text group-hover:from-teal-400 group-hover:to-cyan-400 transition-all duration-500">
                   {candidate.name}
                 </h3>
                 <p className="text-sm text-gray-300 font-medium">{candidate.position}</p>
@@ -133,7 +198,7 @@ export function CandidateCard({ candidate }: CandidateCardProps) {
               </div>
 
               <div className="pt-2">
-                <button className="text-sm text-blue-400 hover:text-blue-300 transition-colors font-medium">
+                <button className="text-sm text-teal-400 hover:text-teal-300 transition-colors font-medium">
                   Click to learn more →
                 </button>
               </div>
@@ -146,11 +211,11 @@ export function CandidateCard({ candidate }: CandidateCardProps) {
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl">
           <div className="relative max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="bg-gradient-to-br from-slate-900/95 to-blue-900/95 backdrop-blur-2xl border border-white/20 rounded-3xl shadow-3xl">
+            <div className="bg-gradient-to-br from-slate-900/95 to-teal-900/95 backdrop-blur-2xl border border-white/20 rounded-3xl shadow-3xl">
               <div className="relative p-8">
                 {/* Close button */}
                 <button
-                  onClick={() => setShowModal(false)}
+                  onClick={handleCloseModal}
                   className="absolute top-6 right-6 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white hover:text-gray-300 transition-all duration-300 hover:scale-110"
                 >
                   ✕
@@ -170,7 +235,7 @@ export function CandidateCard({ candidate }: CandidateCardProps) {
                       <div
                         className={`absolute -bottom-4 -right-4 w-20 h-20 rounded-2xl bg-gradient-to-r ${candidate.color} flex items-center justify-center shadow-2xl`}
                       >
-                        <span className="text-white font-bold text-lg">{candidate.experience}</span>
+                        <span className="text-white font-bold text-sm text-center">Leader</span>
                       </div>
                     </div>
 
