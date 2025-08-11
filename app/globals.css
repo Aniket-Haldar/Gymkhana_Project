@@ -1,5 +1,5 @@
-@import 'tailwindcss';
-@import 'tw-animate-css';
+@import "tailwindcss";
+@import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -37,6 +37,12 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* Added custom gymkhana theme colors */
+  --gymkhana-teal: #14b8a6;
+  --gymkhana-cyan: #06b6d4;
+  --gymkhana-dark: #0f172a;
+  --gymkhana-light: #f0fdfa;
 }
 
 .dark {
@@ -119,5 +125,102 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* Added 3D transform support and smooth scrolling */
+    transform-style: preserve-3d;
+    scroll-behavior: smooth;
   }
+
+  /* Added canvas and 3D element support */
+  canvas {
+    display: block;
+    outline: none;
+  }
+}
+
+/* Added custom utilities for 3D interactions and gymkhana theme */
+@layer utilities {
+  .preserve-3d {
+    transform-style: preserve-3d;
+  }
+
+  .backface-hidden {
+    backface-visibility: hidden;
+  }
+
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+
+  .gymkhana-gradient {
+    background: linear-gradient(135deg, var(--gymkhana-teal), var(--gymkhana-cyan));
+  }
+
+  .text-gymkhana-teal {
+    color: var(--gymkhana-teal);
+  }
+
+  .bg-gymkhana-teal {
+    background-color: var(--gymkhana-teal);
+  }
+
+  .border-gymkhana-teal {
+    border-color: var(--gymkhana-teal);
+  }
+
+  .interactive-3d {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .interactive-3d:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 10px 25px rgba(20, 184, 166, 0.2);
+  }
+}
+
+/* Added keyframes for 3D animations */
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(180deg);
+  }
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 5px rgba(20, 184, 166, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(20, 184, 166, 0.8), 0 0 30px rgba(6, 182, 212, 0.6);
+  }
+}
+
+@keyframes particle-drift {
+  0% {
+    transform: translateY(0px) translateX(0px);
+  }
+  33% {
+    transform: translateY(-10px) translateX(5px);
+  }
+  66% {
+    transform: translateY(5px) translateX(-5px);
+  }
+  100% {
+    transform: translateY(0px) translateX(0px);
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.animate-particle-drift {
+  animation: particle-drift 8s ease-in-out infinite;
 }
