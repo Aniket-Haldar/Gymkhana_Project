@@ -38,11 +38,15 @@
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
 
-  /* Added custom gymkhana theme colors */
-  --gymkhana-teal: #14b8a6;
-  --gymkhana-cyan: #06b6d4;
-  --gymkhana-dark: #0f172a;
-  --gymkhana-light: #f0fdfa;
+  /* Updated to yellow/dark theme colors matching the election poster */
+  --gymkhana-yellow: #fbbf24;
+  --gymkhana-gold: #f59e0b;
+  --gymkhana-amber: #d97706;
+  --gymkhana-dark: #0f0f0f;
+  --gymkhana-charcoal: #1a1a1a;
+  --gymkhana-gray: #374151;
+  --gymkhana-light: #fef3c7;
+  --gymkhana-accent: #eab308;
 }
 
 .dark {
@@ -125,19 +129,17 @@
   }
   body {
     @apply bg-background text-foreground;
-    /* Added 3D transform support and smooth scrolling */
     transform-style: preserve-3d;
     scroll-behavior: smooth;
   }
 
-  /* Added canvas and 3D element support */
   canvas {
     display: block;
     outline: none;
   }
 }
 
-/* Added custom utilities for 3D interactions and gymkhana theme */
+/* Updated utilities for yellow/dark theme and Accenture-style cards */
 @layer utilities {
   .preserve-3d {
     transform-style: preserve-3d;
@@ -152,19 +154,55 @@
   }
 
   .gymkhana-gradient {
-    background: linear-gradient(135deg, var(--gymkhana-teal), var(--gymkhana-cyan));
+    background: linear-gradient(135deg, var(--gymkhana-yellow), var(--gymkhana-amber));
   }
 
-  .text-gymkhana-teal {
-    color: var(--gymkhana-teal);
+  .text-gymkhana-yellow {
+    color: var(--gymkhana-yellow);
   }
 
-  .bg-gymkhana-teal {
-    background-color: var(--gymkhana-teal);
+  .bg-gymkhana-yellow {
+    background-color: var(--gymkhana-yellow);
   }
 
-  .border-gymkhana-teal {
-    border-color: var(--gymkhana-teal);
+  .border-gymkhana-yellow {
+    border-color: var(--gymkhana-yellow);
+  }
+
+  .text-gymkhana-gold {
+    color: var(--gymkhana-gold);
+  }
+
+  .bg-gymkhana-gold {
+    background-color: var(--gymkhana-gold);
+  }
+
+  .border-gymkhana-gold {
+    border-color: var(--gymkhana-gold);
+  }
+
+  .text-gymkhana-dark {
+    color: var(--gymkhana-dark);
+  }
+
+  .bg-gymkhana-dark {
+    background-color: var(--gymkhana-dark);
+  }
+
+  /* Accenture-inspired card styling with yellow/dark theme */
+  .accenture-card {
+    background: rgba(26, 26, 26, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(251, 191, 36, 0.2);
+    border-radius: 16px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3), 0 8px 32px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .accenture-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 32px rgba(251, 191, 36, 0.25), 0 16px 64px rgba(245, 158, 11, 0.15);
+    border-color: rgba(251, 191, 36, 0.4);
   }
 
   .interactive-3d {
@@ -173,11 +211,30 @@
 
   .interactive-3d:hover {
     transform: translateY(-2px) scale(1.02);
-    box-shadow: 0 10px 25px rgba(20, 184, 166, 0.2);
+    box-shadow: 0 10px 25px rgba(251, 191, 36, 0.3);
   }
 }
 
-/* Added keyframes for 3D animations */
+/* Added running text animations for scrolling text elements */
+@keyframes scroll-left {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes scroll-right {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Updated keyframes for yellow/dark theme */
 @keyframes float {
   0%,
   100% {
@@ -191,10 +248,10 @@
 @keyframes pulse-glow {
   0%,
   100% {
-    box-shadow: 0 0 5px rgba(20, 184, 166, 0.5);
+    box-shadow: 0 0 5px rgba(251, 191, 36, 0.5);
   }
   50% {
-    box-shadow: 0 0 20px rgba(20, 184, 166, 0.8), 0 0 30px rgba(6, 182, 212, 0.6);
+    box-shadow: 0 0 20px rgba(251, 191, 36, 0.8), 0 0 30px rgba(245, 158, 11, 0.6);
   }
 }
 
@@ -223,4 +280,32 @@
 
 .animate-particle-drift {
   animation: particle-drift 8s ease-in-out infinite;
+}
+
+/* Added animation classes for running text */
+.animate-scroll-left {
+  animation: scroll-left linear infinite;
+}
+
+.animate-scroll-right {
+  animation: scroll-right linear infinite;
+}
+
+/* Added responsive utilities for mobile optimization */
+@layer utilities {
+  .mobile-optimized {
+    @apply text-sm sm:text-base;
+  }
+
+  .mobile-card {
+    @apply p-4 sm:p-6 lg:p-8;
+  }
+
+  .mobile-spacing {
+    @apply space-y-4 sm:space-y-6 lg:space-y-8;
+  }
+
+  .mobile-grid {
+    @apply grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
+  }
 }
